@@ -30,7 +30,6 @@ namespace FQueue
         {
             Trace.MethodEnter();
             startupTimer.Dispose();
-            Console.WriteLine("OK");
 
             Trace.MethodLeave();
         }

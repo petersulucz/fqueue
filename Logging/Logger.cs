@@ -1,6 +1,7 @@
 namespace FQueue.Logging
 {
     using System.Diagnostics.Tracing;
+    using System.Runtime.CompilerServices;
 
     internal class Logger : EventSource
     {
@@ -100,18 +101,16 @@ namespace FQueue.Logging
             this.WriteEvent(7, message);
         }
 
-        [Event(8, Message = "{0}", Keywords = Keywords.General, Level = EventLevel.Verbose)]
-        public void MethodEnter()
+        [Event(8, Message = "Method Enter {0}", Keywords = Keywords.General, Level = EventLevel.Verbose)]
+        public void MethodEnter([CallerMemberName] string method = "")
         {
-            var method = "TODO ENTER METHOD";
             //var stk = Environment.StackTrace;
             this.WriteEvent(8, method);
         }
 
-        [Event(9, Message = "{0}", Keywords = Keywords.General, Level = EventLevel.Verbose)]
-        public void MethodLeave()
+        [Event(9, Message = "Method Leave {0}", Keywords = Keywords.General, Level = EventLevel.Verbose)]
+        public void MethodLeave([CallerMemberName] string method = "")
         {
-            var method = "TODO EXIT METHOD";
             //var stk = Environment.StackTrace;
             this.WriteEvent(9, method);
         }
