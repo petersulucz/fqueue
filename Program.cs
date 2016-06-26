@@ -6,7 +6,9 @@ namespace FQueue
     using Logging;
     using static Logging.Logger;
     using System.Diagnostics.Tracing;
+    using System.Net;
 
+    using fqueue.Net;
     using fqueue.Queues;
 
     using Newtonsoft.Json.Linq;
@@ -16,6 +18,8 @@ namespace FQueue
         private static Timer startupTimer = null;
 
         private static EventWaitHandle startupHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+        private static QueueEndpoint endpoint;
 
         public static void Main(string[] args)
         {
@@ -78,7 +82,7 @@ namespace FQueue
                         {
                             foreach (var queue in QueueManager.Intance.List)
                             {
-                                Console.WriteLine($"Name: {queue.Name} Length: {queue.Count}");
+                                Console.WriteLine($"Name: {queue.Name} Length: {queue.Count} Index: {queue.Index}");
                             }
                             break;
                         }
@@ -94,7 +98,7 @@ namespace FQueue
             while (false == String.Equals("exit", line, StringComparison.OrdinalIgnoreCase));
 
             Trace.MethodLeave();
-            Trace.Shutdown();
+            Program.Cleanup();
         }
 
         public static async void Run(object arg)
@@ -105,11 +109,19 @@ namespace FQueue
             Trace.Info("Starting intialization.");
             QueueManager.Intance.Initialize();
 
+            Program.endpoint = new QueueEndpoint(new IPEndPoint(IPAddress.Any, 1024));
+
             Trace.Info("Initialization completed.");
             startupHandle.Set();
 
 
             Trace.MethodLeave();
+        }
+
+        public static void Cleanup()
+        {
+            Program.endpoint.Dispose();
+            Trace.Shutdown();
         }
     }
 }

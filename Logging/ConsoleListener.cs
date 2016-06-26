@@ -3,13 +3,15 @@ namespace FQueue.Logging
     using System;
     using System.Diagnostics.Tracing;
     using System.Linq;
+    using System.Threading;
 
     internal class ConsoleListener : EventListener
     {
+
+        private static ConsoleColor originalColor = ConsoleColor.White;
+
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            var oldColor = Console.ForegroundColor;
-
             switch (eventData.Level)
             {
                 case EventLevel.Critical:
@@ -30,9 +32,9 @@ namespace FQueue.Logging
             {
                 message = String.Format(eventData.Message, eventData.Payload.ToArray());
             }
-            Console.WriteLine($"[{DateTime.Now}-{eventData.EventName}] - {message}");
+            Console.WriteLine($"[{DateTime.Now}-Thread:{Thread.CurrentThread.ManagedThreadId}] - {message}");
 
-            Console.ForegroundColor = oldColor;
+            Console.ForegroundColor = originalColor;
         }
     }
 }

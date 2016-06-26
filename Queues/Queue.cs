@@ -22,7 +22,7 @@
         /// </summary>
         private long tail = -1L;
 
-        private const int BufferLen = 1000;
+        private const int BufferLen = 100000;
 
         /// <summary>
         /// The buffer.
@@ -49,18 +49,20 @@
 
         public string Name => this.name;
 
+        public long Index => this.currentIndex;
+
         /// <summary>
         /// The enqueue.
         /// </summary>
         /// <param name="item">
         /// The item.
         /// </param>
-        public void Enqueue(string item)
+        public bool Enqueue(string item)
         {
             if (this.count == BufferLen)
             {
                 Trace.Error("Queue is full. Dropping item.");
-                throw new IndexOutOfRangeException("Queue is full.");
+                return false;
             }
 
             // Create a new queue item with a unique id
@@ -75,6 +77,8 @@
             {
                 Trace.Warning($"{this.name} length {this.count} approaching maximum: {BufferLen}");
             }
+
+            return true;
         }
 
         /// <summary>
@@ -92,7 +96,7 @@
             }
 
             var index = Interlocked.Increment(ref this.tail);
-            var item = this.buffer[index];
+            var item = this.buffer[index % BufferLen];
             Interlocked.Decrement(ref this.count);
             Trace.Info($"Item popped from {this.name}, current count {this.count}");
             return item;
