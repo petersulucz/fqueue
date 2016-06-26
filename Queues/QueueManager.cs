@@ -20,7 +20,7 @@
 
         private QueueManager()
         {
-            
+            // Nothing.
         }
 
         public void Initialize()
@@ -32,8 +32,16 @@
             }
         }
 
+        /// <summary>
+        /// Get a certain queue by name
+        /// </summary>
+        /// <param name="key">The queue name</param>
+        /// <returns>A queue, or an exception. your pick</returns>
         public Queue this[string key] => QueueManager.Queues[key];
 
+        /// <summary>
+        /// Gets all of the queues.
+        /// </summary>
         public IEnumerable<Queue> List => Queues.Values;
     }
 }

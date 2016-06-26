@@ -4,13 +4,13 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Reflection.Metadata.Ecma335.Blobs;
-
-    using FQueue.Logging;
 
     using Newtonsoft.Json.Linq;
     using static FQueue.Logging.Logger;
 
+    /// <summary>
+    /// The configuration manager
+    /// </summary>
     public class ConfigurationManager
     {
         private const string ConfigurationFileName = "appconfig.json";
@@ -22,6 +22,9 @@
             this.ReadConfiguration();
         }
 
+        /// <summary>
+        /// Read the configuration from the file
+        /// </summary>
         private void ReadConfiguration()
         {
             string text = null;
@@ -50,6 +53,9 @@
             this.Queues = ((JArray)jConfig["queues"]).Select(q => new QueueConfigItem() { Name = q["name"].ToObject<string>() });
         }
 
+        /// <summary>
+        /// Gets the list of queue configurations
+        /// </summary>
         public IEnumerable<QueueConfigItem> Queues { get; private set; }
     }
 }

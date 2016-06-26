@@ -15,36 +15,45 @@ namespace FQueue
 
     public class Program
     {
+        /// <summary>
+        /// The startup timer
+        /// </summary>
         private static Timer startupTimer = null;
 
-        private static EventWaitHandle startupHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
+        /// <summary>
+        /// Set once startup is completed
+        /// </summary>
+        private static readonly EventWaitHandle startupHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
+        /// <summary>
+        /// The queue endpoint
+        /// </summary>
         private static QueueEndpoint endpoint;
 
+        /// <summary>
+        /// Main.
+        /// </summary>
+        /// <param name="args">Args to main...</param>
         public static void Main(string[] args)
         {
             var listener = new ConsoleListener();
             listener.EnableEvents(Trace, EventLevel.Informational);
             Trace.Startup();
-
-
-            Trace.MethodEnter();
             startupTimer = new Timer(Program.Run, null, 1000, Timeout.Infinite);
 
             startupHandle.WaitOne();
-            var line = String.Empty;
+            string line;
+
             do
             {
-                var color = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write("fqueue -> ");
-                Console.ForegroundColor = color;
+                // Write the prompt
+                Program.WritePrompt();
+
 
                 line = Console.ReadLine();
-
                 line = line.Trim().ToLowerInvariant();
-
                 var pargs = line.Split(' ');
+
                 switch (pargs[0])
                 {
                     case "push":
@@ -68,14 +77,8 @@ namespace FQueue
                             }
                             var queueName = pargs[1];
                             var item = QueueManager.Intance[queueName].Dequeue()?.Payload;
-                            if (null != item)
-                            {
-                                Console.WriteLine(item);
-                            }
-                            else
-                            {
-                                Console.WriteLine("Queue empty");
-                            }
+
+                            Console.WriteLine(item ?? "Queue empty");
                         }
                         break;
                     case "list":
@@ -97,11 +100,28 @@ namespace FQueue
             }
             while (false == String.Equals("exit", line, StringComparison.OrdinalIgnoreCase));
 
-            Trace.MethodLeave();
+            // Finish the program
             Program.Cleanup();
         }
 
-        public static async void Run(object arg)
+        /// <summary>
+        /// Write the console prompt
+        /// </summary>
+        private static void WritePrompt()
+        {
+            // Wanted to back up original color. But that made a mess
+            var color = ConsoleColor.White;
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("fqueue -> ");
+            Console.ForegroundColor = color;
+        }
+
+        /// <summary>
+        /// Run the program
+        /// </summary>
+        /// <param name="arg">Arg. totally ignored...</param>
+        public static void Run(object arg)
         {
             Trace.MethodEnter();
             startupTimer.Dispose();
@@ -112,12 +132,16 @@ namespace FQueue
             Program.endpoint = new QueueEndpoint(new IPEndPoint(IPAddress.Any, 1024));
 
             Trace.Info("Initialization completed.");
-            startupHandle.Set();
 
+            // Set the handle on completion
+            startupHandle.Set();
 
             Trace.MethodLeave();
         }
 
+        /// <summary>
+        /// Clean pu the mess
+        /// </summary>
         public static void Cleanup()
         {
             Program.endpoint.Dispose();

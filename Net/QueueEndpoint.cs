@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace fqueue.Net
+﻿namespace fqueue.Net
 {
     using System.IO;
     using System.Net;
@@ -12,20 +7,37 @@ namespace fqueue.Net
     using System.Threading;
 
     using fqueue.Queues;
+    using System;
+    using System.Threading.Tasks;
 
-    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
     using static FQueue.Logging.Logger;
 
+    /// <summary>
+    /// The queue endpoint
+    /// </summary>
     public class QueueEndpoint : IDisposable
     {
+        /// <summary>
+        /// The tcp listener
+        /// </summary>
         private readonly TcpListener listener;
 
+        /// <summary>
+        /// The cancellation source
+        /// </summary>
         private readonly CancellationTokenSource tokenSource;
 
+        /// <summary>
+        /// The number of current active connections
+        /// </summary>
         private int activeConnections = 0;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="QueueEndpoint"/> class.
+        /// </summary>
+        /// <param name="endpoint">The ip endpoint to bind to</param>
         public QueueEndpoint(IPEndPoint endpoint)
         {
             Trace.MethodEnter();
@@ -46,7 +58,7 @@ namespace fqueue.Net
         /// </param>
         public async void DistributeTasks(object obj)
         {
-            Trace.Info($"Opening lister on {((IPEndPoint)this.listener.LocalEndpoint).Address}:{((IPEndPoint)this.listener.LocalEndpoint).Port}");
+            Trace.Info($"Opening listener on {((IPEndPoint)this.listener.LocalEndpoint).Address}:{((IPEndPoint)this.listener.LocalEndpoint).Port}");
             var token = (CancellationToken)obj;
             this.listener.Start();
 
@@ -54,12 +66,19 @@ namespace fqueue.Net
             {
                 var client = await this.listener.AcceptTcpClientAsync();
 
+                // Add to active
                 Interlocked.Increment(ref this.activeConnections);
+
                 // Fire off into nothingness
                 var tsk = Task.Run(() => this.HandleConnection(client), token);
             }
         }
 
+        /// <summary>
+        /// Handle an incoming connection
+        /// </summary>
+        /// <param name="client">The client socket</param>
+        /// <returns>A task</returns>
         private async Task HandleConnection(TcpClient client)
         {
             try
@@ -72,6 +91,8 @@ namespace fqueue.Net
                         using (var textreader = new StreamReader(stream, Encoding.Unicode))
                         {
                             var text = String.Empty;
+
+                            // Read everything upto the \r\r
                             var line = String.Empty;
                             while (false == String.IsNullOrWhiteSpace(line = await textreader.ReadLineAsync()))
                             {
@@ -84,10 +105,10 @@ namespace fqueue.Net
                             switch (dtype.Trim().ToLowerInvariant())
                             {
                                 case "push":
-                                    await this.HandlePush(jobject, stream);
+                                    await HandlePush(jobject, stream);
                                     break;
                                 case "pop":
-                                    await this.HandlePop(jobject, stream);
+                                    await HandlePop(jobject, stream);
                                     return;
                                 default:
                                     return;
@@ -98,11 +119,18 @@ namespace fqueue.Net
             }
             finally
             {
+                // Dont want leaks so do in finally
                 Interlocked.Decrement(ref this.activeConnections);
             }
         }
 
-        private async Task HandlePop(JObject reader, Stream client)
+        /// <summary>
+        /// Handle a pop from the queue
+        /// </summary>
+        /// <param name="reader">The json object</param>
+        /// <param name="client">The stream client</param>
+        /// <returns>A task</returns>
+        private static async Task HandlePop(JObject reader, Stream client)
         {
             var queueName = reader["queue"].ToString();
 
@@ -119,21 +147,20 @@ namespace fqueue.Net
             await client.WriteAsync(response, 0, response.Length);
         }
 
-        private async Task HandlePush(JObject reader, Stream client)
+        /// <summary>
+        /// Handle a push onto the queue
+        /// </summary>
+        /// <param name="reader">The json object</param>
+        /// <param name="client">The client stream.</param>
+        /// <returns>A task</returns>
+        private static async Task HandlePush(JObject reader, Stream client)
         {
             var queueName = reader["queue"].ToString();
 
             var payload = reader["data"].ToString();
-
-            byte[] response = null;
-            if (true == QueueManager.Intance[queueName].Enqueue(payload))
-            {
-                response = Encoding.Unicode.GetBytes("OK");
-            }
-            else
-            {
-                response = Encoding.Unicode.GetBytes("Failed");
-            }
+           
+            // Get the response bytes. These should be constants.
+            var response = Encoding.Unicode.GetBytes(true == QueueManager.Intance[queueName].Enqueue(payload) ? "OK" : "Failed");
 
             await client.WriteAsync(response, 0, response.Length);
         }

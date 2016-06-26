@@ -34,7 +34,10 @@
         /// </summary>
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(0);
 
-        private string name;
+        /// <summary>
+        /// The name of the queue
+        /// </summary>
+        private readonly string name;
 
         /// <summary>
         /// The queue
@@ -45,10 +48,19 @@
             this.name = name;
         }
 
+        /// <summary>
+        /// Gets the number of items in this queue.
+        /// </summary>
         public int Count => this.count;
 
+        /// <summary>
+        /// Gets the name of this queue.
+        /// </summary>
         public string Name => this.name;
 
+        /// <summary>
+        /// Gets the current count of items that have been in the queue.
+        /// </summary>
         public long Index => this.currentIndex;
 
         /// <summary>
