@@ -1,7 +1,6 @@
 ﻿# fqueue
 
 * A simple .net core queue
-* Will be used in griddle for queueing stuff
 
 Opens an endpoint on port 1024
 Waits for tcp connections:
@@ -21,8 +20,7 @@ Protocol:
         -- SEND
         {
             "type": "push",
-            "queue": "<queuename>",
-            "data": "whatever"
+            "queue": "<queuename>"
         }\n\n
         -- RECV
         <data>

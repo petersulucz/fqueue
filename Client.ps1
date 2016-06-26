@@ -1,11 +1,12 @@
-﻿$global:fqueueSocketEndpoint = $null;
+﻿# The endpoint
+$global:fqueueSocketEndpoint = $null;
 
-function Connect
+function Queue-Connect
 {
     param
     (
-        [Parameter(Mandatory=$false)]$IP = '127.0.0.1',
-        [Parameter(Mandatory=$true)]$Port
+        [Parameter(Mandatory=$false)][String]$IP = '127.0.0.1',
+        [Parameter(Mandatory=$true)][Int]$Port
     )
     process
     {
@@ -14,24 +15,27 @@ function Connect
     }
 }
 
-function GetSocket
-{
-    $sock = [System.Net.Sockets.TcpClient]::new();
-    return $sock;
-}
-
-
+# Push an item onto the queue
 function Queue-Push
 {
+    [CmdletBinding()]
     param
     (
-        [Parameter(Mandatory=$true)]$Queue,
-        [Parameter(Mandatory=$true)]$Data
+        [Parameter(Mandatory=$true)][String]$Queue,
+        [Parameter(Mandatory=$true)][String]$Data,
+        [Parameter(Mandatory=$false)][System.Net.IPEndPoint]$Endpoint = $global:fqueueSocketEndpoint
     )
     process
     {
+        # Make sure the endpoint is defined
+        if(-not $Endpoint)
+        {
+            throw 'The endpoint has not been defined. Please call Queue-Connect'
+        }
+
+
         $obj = "{ `"type`": `"push`", `"queue`": `"$Queue`", `"data`": `"$data`"}`n`n"
-        $sock = GetSocket
+        $sock = $sock = [System.Net.Sockets.TcpClient]::new();
 
         $sock.Connect($global:fqueueSocketEndpoint);
         $str = $sock.GetStream();
@@ -44,32 +48,48 @@ function Queue-Push
     }
 }
 
+# Pop an item from the queue
 function Queue-Pop
 {
+    [CmdletBinding()]
     param
     (
-        [Parameter(Mandatory=$true)]$Queue
+        [Parameter(Mandatory=$true)][String]$Queue,
+        [Parameter(Mandatory=$false)][System.Net.IPEndPoint]$Endpoint = $global:fqueueSocketEndpoint
     )
     process
     {
+        # Make sure the endpoint is defined
+        if(-not $Endpoint)
+        {
+            throw 'The endpoint has not been defined. Please call Queue-Connect'
+        }
+
+        # Stuff to send
         $obj = "{ `"type`": `"pop`", `"queue`": `"$Queue`"}`n`n"
-        $sock = GetSocket
+        $sock = $sock = [System.Net.Sockets.TcpClient]::new();
 
         $sock.Connect($global:fqueueSocketEndpoint);
         $str = $sock.GetStream();
 
+        # Get the text to send
         $bytes = [System.Text.UnicodeEncoding]::Unicode.GetBytes($obj)
         $str.Write($bytes, 0, $bytes.Length);
 
+        # Read all our output
         $reader = [System.IO.StreamReader]::new($str, [System.Text.Encoding]::Unicode)
-
         $text = $reader.ReadToEnd();
-
-        Write-Output $text
 
         $reader.Dispose();
         $str.Dispose();
         $sock.Dispose();
+
+        if ($text -match 'failed')
+        {
+            throw 'Failed to read from queue. Must have timed out.'
+        }
+
+        return $text
     }
 }
 
