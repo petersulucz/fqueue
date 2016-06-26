@@ -59,13 +59,13 @@ namespace FQueue.Logging
 
         public static Logger Trace => src;
 
-        [Event(1, Message = "Startup", Keywords = Keywords.General, Level = EventLevel.Informational)]
+        [Event(1, Message = "Startup", Keywords = Keywords.General, Level = EventLevel.LogAlways)]
         public void Startup()
         {
             this.WriteEvent(1);
         }
 
-        [Event(2, Message = "Shutdown", Keywords = Keywords.General, Level = EventLevel.Informational)]
+        [Event(2, Message = "Shutdown", Keywords = Keywords.General, Level = EventLevel.LogAlways)]
         public void Shutdown()
         {
             this.WriteEvent(2);

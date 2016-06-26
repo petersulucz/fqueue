@@ -1,0 +1,11 @@
+﻿{
+  "queues": [
+    {
+      "name": "main"
+    },
+    {
+      "name": "numtwo"
+    }
+  ]
+}
+
