@@ -136,13 +136,13 @@
 
             var payload = QueueManager.Intance[queueName].Dequeue()?.Payload;
 
+            var status = Status.Success;
             if (String.IsNullOrWhiteSpace(payload))
             {
-                payload = "ERROR";
+                status = Status.Empty;
             }
 
-            byte[] response = null;
-            response = Encoding.Unicode.GetBytes(payload);
+            var response = QueueEndpoint.ConstructResponse(queueName, "pop", status, payload);
 
             await client.WriteAsync(response, 0, response.Length);
         }
@@ -158,11 +158,36 @@
             var queueName = reader["queue"].ToString();
 
             var payload = reader["data"].ToString();
-           
+
+            var result = QueueManager.Intance[queueName].Enqueue(payload);
+
             // Get the response bytes. These should be constants.
-            var response = Encoding.Unicode.GetBytes(true == QueueManager.Intance[queueName].Enqueue(payload) ? "OK" : "Failed");
+            var response = QueueEndpoint.ConstructResponse(queueName, "push", result, String.Empty);
 
             await client.WriteAsync(response, 0, response.Length);
+        }
+
+        /// <summary>
+        /// Construct a response
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="action"></param>
+        /// <param name="status"></param>
+        /// <param name="payload"></param>
+        /// <returns></returns>
+        private static byte[] ConstructResponse(string queue, string action, Status status, string payload)
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine(queue);
+            builder.Append(action);
+            builder.Append("?");
+            builder.AppendLine(status.ToString());
+            builder.AppendLine(payload);
+            builder.AppendLine();
+
+            var bytes = Encoding.Unicode.GetBytes(builder.ToString());
+
+            return bytes;
         }
 
         /// <summary>

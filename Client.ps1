@@ -43,8 +43,16 @@ function Queue-Push
         $bytes = [System.Text.UnicodeEncoding]::Unicode.GetBytes($obj)
         $str.Write($bytes, 0, $bytes.Length);
 
+        # Read all our output
+        $reader = [System.IO.StreamReader]::new($str, [System.Text.Encoding]::Unicode)
+        $text = $reader.ReadToEnd();
+
+        $reader.Dispose();
+
         $str.Dispose();
         $sock.Dispose();
+
+        return $text
     }
 }
 
@@ -83,11 +91,6 @@ function Queue-Pop
         $reader.Dispose();
         $str.Dispose();
         $sock.Dispose();
-
-        if ($text -match 'failed')
-        {
-            throw 'Failed to read from queue. Must have timed out.'
-        }
 
         return $text
     }

@@ -40,12 +40,18 @@
         private readonly string name;
 
         /// <summary>
+        /// Whether the queue is currently enabled
+        /// </summary>
+        private bool enabled;
+
+        /// <summary>
         /// The queue
         /// </summary>
         /// <param name="name"></param>
         public Queue(string name)
         {
             this.name = name;
+            this.enabled = true;
         }
 
         /// <summary>
@@ -59,6 +65,20 @@
         public string Name => this.name;
 
         /// <summary>
+        /// Gets or sets the enabled status
+        /// </summary>
+        public bool IsEnabled {
+            get
+            {
+                return this.enabled;
+            }
+            set
+            {
+                this.enabled = value;
+            }
+        }
+
+        /// <summary>
         /// Gets the current count of items that have been in the queue.
         /// </summary>
         public long Index => this.currentIndex;
@@ -69,13 +89,19 @@
         /// <param name="item">
         /// The item.
         /// </param>
-        public bool Enqueue(string item)
+        public Status Enqueue(string item)
         {
             if (this.count == BufferLen)
             {
                 Trace.Error("Queue is full. Dropping item.");
-                return false;
+                return Status.Full;
             }
+
+            if (false == this.enabled)
+            {
+                Trace.Error("Queue in purge. Dropping item.");
+                return Status.Purge;
+   ;         }
 
             // Create a new queue item with a unique id
             var queueItem = new QueueElement(Interlocked.Increment(ref this.currentIndex), item);
@@ -90,7 +116,7 @@
                 Trace.Warning($"{this.name} length {this.count} approaching maximum: {BufferLen}");
             }
 
-            return true;
+            return Status.Success;
         }
 
         /// <summary>

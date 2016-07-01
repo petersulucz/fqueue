@@ -85,8 +85,30 @@ namespace FQueue
                         {
                             foreach (var queue in QueueManager.Intance.List)
                             {
-                                Console.WriteLine($"Name: {queue.Name} Length: {queue.Count} Index: {queue.Index}");
+                                Console.WriteLine($"Name: {queue.Name} Length: {queue.Count} Index: {queue.Index} Enabed: {queue.IsEnabled}");
                             }
+                            break;
+                        }
+                    case "purge":
+                        {
+                            if (pargs.Length < 2)
+                            {
+                                Console.WriteLine("Invalid args.");
+                                break;
+                            }
+                            var queueName = pargs[1];
+                            QueueManager.Intance[queueName].IsEnabled = false;
+                            break;
+                        }
+                    case "enable":
+                        {
+                            if (pargs.Length < 2)
+                            {
+                                Console.WriteLine("Invalid args.");
+                                break;
+                            }
+                            var queueName = pargs[1];
+                            QueueManager.Intance[queueName].IsEnabled = true;
                             break;
                         }
                     case "exit":
